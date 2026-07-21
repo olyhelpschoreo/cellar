@@ -95,3 +95,25 @@ export function duePhrase(s: CareStatus): string {
   if (s.daysUntilDue === 1) return "Water tomorrow";
   return `Water in ${s.daysUntilDue} days`;
 }
+
+/** Compact schedule phrase for tight card footers, e.g. "7d overdue". */
+export function duePhraseShort(s: CareStatus): string {
+  if (s.daysUntilDue < 0) return `${Math.abs(s.daysUntilDue)}d overdue`;
+  if (s.daysUntilDue === 0) return "Due today";
+  if (s.daysUntilDue === 1) return "Due tomorrow";
+  return `Due in ${s.daysUntilDue}d`;
+}
+
+/** Relative phrasing for a past date: "Today", "Yesterday", "5 days ago". */
+export function relativeDay(iso: string, today: string = todayISO()): string {
+  const diff = daysBetween(today, iso);
+  if (diff <= 0) return "Today";
+  if (diff === 1) return "Yesterday";
+  if (diff < 30) return `${diff} days ago`;
+  if (diff < 365) {
+    const m = Math.round(diff / 30);
+    return `${m} month${m === 1 ? "" : "s"} ago`;
+  }
+  const y = (diff / 365).toFixed(1).replace(/\.0$/, "");
+  return `${y} year${y === "1" ? "" : "s"} ago`;
+}

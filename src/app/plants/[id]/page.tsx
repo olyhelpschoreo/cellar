@@ -7,18 +7,22 @@ import { toast } from "sonner";
 import {
   ArrowLeft,
   Droplet,
+  ImageIcon,
   Leaf,
   MapPin,
   Scissors,
   Sprout,
+  StickyNote,
   Sun,
   Trash2,
+  type LucideIcon,
 } from "lucide-react";
 import { useCellar } from "@/lib/cellar-provider";
 import {
   careStatus,
   daysBetween,
   duePhrase,
+  relativeDay,
   todayISO,
 } from "@/lib/care";
 import { STATUS_STYLES } from "@/lib/status-style";
@@ -43,23 +47,28 @@ function formatDate(iso: string): string {
   });
 }
 
-function agePhrase(acquired?: string): string | null {
+/** Compact age for the fact card, e.g. "7 months", "12 days", "1.5 years". */
+function agePhraseShort(acquired?: string): string | null {
   if (!acquired) return null;
   const days = daysBetween(todayISO(), acquired);
   if (days < 0) return null;
-  if (days < 30) return `${days} day${days === 1 ? "" : "s"} in your care`;
+  if (days < 30) return `${days} day${days === 1 ? "" : "s"}`;
   const months = Math.round(days / 30);
-  if (months < 18) return `${months} month${months === 1 ? "" : "s"} in your care`;
+  if (months < 18) return `${months} month${months === 1 ? "" : "s"}`;
   const years = (days / 365).toFixed(1).replace(/\.0$/, "");
-  return `${years} years in your care`;
+  return `${years} years`;
 }
 
-const LOG_ACTIONS: { type: CareEventType; icon: typeof Droplet }[] = [
-  { type: "watered", icon: Droplet },
-  { type: "fertilized", icon: Sprout },
-  { type: "pruned", icon: Scissors },
-  { type: "repotted", icon: Leaf },
-];
+const CARE_ICONS: Record<CareEventType, LucideIcon> = {
+  watered: Droplet,
+  fertilized: Sprout,
+  pruned: Scissors,
+  repotted: Leaf,
+  photo: ImageIcon,
+  noted: StickyNote,
+};
+
+const LOG_ACTIONS: CareEventType[] = ["watered", "fertilized", "pruned", "repotted"];
 
 export default function PlantDetailPage() {
   const params = useParams<{ id: string }>();
@@ -150,7 +159,7 @@ export default function PlantDetailPage() {
           )}
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button onClick={onWaterNow} className="gap-1.5">
+            <Button onClick={onWaterNow} className="gap-1.5 active:scale-95">
               <Droplet className="size-4" /> Water now
             </Button>
             <AddPhotoDialog plantId={plant.id} />
@@ -181,7 +190,7 @@ export default function PlantDetailPage() {
         <Fact
           icon={Sprout}
           label="Age"
-          value={agePhrase(plant.acquiredDate) ?? "—"}
+          value={agePhraseShort(plant.acquiredDate) ?? "—"}
         />
       </div>
 
@@ -200,15 +209,18 @@ export default function PlantDetailPage() {
           Log care
         </h2>
         <div className="flex flex-wrap gap-2">
-          {LOG_ACTIONS.map(({ type, icon: Icon }) => (
-            <button
-              key={type}
-              onClick={() => onLogCare(type)}
-              className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-sm transition-colors hover:bg-accent"
-            >
-              <Icon className="size-4" /> {CARE_EVENT_LABELS[type]}
-            </button>
-          ))}
+          {LOG_ACTIONS.map((type) => {
+            const Icon = CARE_ICONS[type];
+            return (
+              <button
+                key={type}
+                onClick={() => onLogCare(type)}
+                className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-sm transition-colors hover:bg-accent active:scale-95"
+              >
+                <Icon className="size-4" /> {CARE_EVENT_LABELS[type]}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -229,15 +241,30 @@ export default function PlantDetailPage() {
           <p className="text-sm text-muted-foreground">No care logged yet.</p>
         ) : (
           <ul className="space-y-1">
-            {plant.events.map((e) => (
-              <li
-                key={e.id}
-                className="flex items-center justify-between rounded-lg px-3 py-2 text-sm odd:bg-muted/40"
-              >
-                <span className="font-medium">{CARE_EVENT_LABELS[e.type]}</span>
-                <span className="text-muted-foreground">{formatDate(e.date)}</span>
-              </li>
-            ))}
+            {plant.events.map((e) => {
+              const Icon = CARE_ICONS[e.type];
+              return (
+                <li
+                  key={e.id}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm odd:bg-muted/40"
+                >
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+                    <Icon className="size-3.5" />
+                  </span>
+                  <span className="min-w-0 flex-1 truncate font-medium">
+                    {CARE_EVENT_LABELS[e.type]}
+                    {e.note && (
+                      <span className="ml-2 font-normal text-muted-foreground">
+                        {e.note}
+                      </span>
+                    )}
+                  </span>
+                  <span className="shrink-0 text-muted-foreground" title={formatDate(e.date)}>
+                    {relativeDay(e.date)}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

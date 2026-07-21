@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Droplet } from "lucide-react";
 import { toast } from "sonner";
 import type { CareEvent, Plant } from "@/lib/types";
-import { careStatus, duePhrase } from "@/lib/care";
+import { careStatus, duePhraseShort } from "@/lib/care";
 import { STATUS_STYLES } from "@/lib/status-style";
 import { StatusBadge } from "./status-badge";
 import { PlantPhoto } from "./plant-photo";
@@ -55,14 +55,17 @@ export function PlantCard({ plant, events }: { plant: Plant; events: CareEvent[]
         </Link>
 
         <div className="mt-2 flex items-center justify-between gap-2">
-          <span className="text-xs text-muted-foreground">{duePhrase(status)}</span>
+          <span className="min-w-0 truncate text-xs text-muted-foreground">
+            {duePhraseShort(status)}
+          </span>
           <button
             type="button"
             onClick={onWater}
-            className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            aria-label={`Water ${plant.nickname}`}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-95 sm:px-3"
           >
             <Droplet className="size-3.5" />
-            Water
+            <span className="hidden sm:inline">Water</span>
           </button>
         </div>
       </div>
