@@ -27,8 +27,8 @@ export function PlantPhoto({
   glyphClassName,
 }: PlantPhotoProps) {
   if (photoUrl) {
-    // eslint-disable-next-line @next/next/no-img-element
     return (
+      // eslint-disable-next-line @next/next/no-img-element -- data-URL photos, no loader
       <img
         src={photoUrl}
         alt={name}

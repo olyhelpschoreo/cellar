@@ -51,10 +51,13 @@ export function CellarProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<CareEvent[]>([]);
 
   useEffect(() => {
+    // localStorage is unavailable during SSR, so we hydrate the store on mount.
     const snap = loadSnapshot();
+    /* eslint-disable react-hooks/set-state-in-effect */
     setPlants(snap.plants);
     setEvents(snap.events);
     setReady(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   const sync = useCallback((snap: { plants: Plant[]; events: CareEvent[] }) => {

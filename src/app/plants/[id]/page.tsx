@@ -2,13 +2,11 @@
 
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   ArrowLeft,
-  Camera,
   Droplet,
-  ImagePlus,
   Leaf,
   MapPin,
   Scissors,
@@ -31,6 +29,8 @@ import {
 } from "@/lib/types";
 import { StatusBadge } from "@/components/status-badge";
 import { PlantPhoto } from "@/components/plant-photo";
+import { PhotoTimeline } from "@/components/photo-timeline";
+import { AddPhotoDialog } from "@/components/add-photo-dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -54,15 +54,6 @@ function agePhrase(acquired?: string): string | null {
   return `${years} years in your care`;
 }
 
-async function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
 const LOG_ACTIONS: { type: CareEventType; icon: typeof Droplet }[] = [
   { type: "watered", icon: Droplet },
   { type: "fertilized", icon: Sprout },
@@ -75,7 +66,6 @@ export default function PlantDetailPage() {
   const router = useRouter();
   const { ready, getPlant, waterPlant, logCare, removePlant, undoEvents } =
     useCellar();
-  const photoRef = useRef<HTMLInputElement>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const plant = getPlant(params.id);
@@ -104,16 +94,6 @@ export default function PlantDetailPage() {
 
   const status = careStatus(plant, plant.events);
   const s = STATUS_STYLES[status.status];
-  const photos = plant.events.filter((e) => e.type === "photo" && e.photoUrl);
-
-  async function onAddPhoto(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !plant) return;
-    const photoUrl = await fileToDataUrl(file);
-    logCare({ plantId: plant.id, type: "photo", date: todayISO(), photoUrl });
-    toast.success("Photo added to the timeline");
-    e.target.value = "";
-  }
 
   function onWaterNow() {
     if (!plant) return;
@@ -173,21 +153,7 @@ export default function PlantDetailPage() {
             <Button onClick={onWaterNow} className="gap-1.5">
               <Droplet className="size-4" /> Water now
             </Button>
-            <input
-              ref={photoRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              onChange={onAddPhoto}
-            />
-            <Button
-              variant="outline"
-              className="gap-1.5"
-              onClick={() => photoRef.current?.click()}
-            >
-              <Camera className="size-4" /> Add photo
-            </Button>
+            <AddPhotoDialog plantId={plant.id} />
           </div>
 
           {/* Schedule */}
@@ -251,33 +217,7 @@ export default function PlantDetailPage() {
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           Growth timeline
         </h2>
-        {photos.length === 0 ? (
-          <button
-            onClick={() => photoRef.current?.click()}
-            className="flex w-full flex-col items-center gap-2 rounded-xl border border-dashed py-10 text-sm text-muted-foreground transition-colors hover:bg-accent"
-          >
-            <ImagePlus className="size-6" />
-            Add a photo to start tracking how {plant.nickname} grows.
-          </button>
-        ) : (
-          <div className="flex gap-3 overflow-x-auto pb-2">
-            {photos.map((p) => (
-              <figure key={p.id} className="w-32 shrink-0">
-                <div className="aspect-square overflow-hidden rounded-xl border">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={p.photoUrl}
-                    alt={`${plant.nickname} on ${p.date}`}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <figcaption className="mt-1 text-center text-xs text-muted-foreground">
-                  {formatDate(p.date)}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        )}
+        <PhotoTimeline plant={plant} />
       </div>
 
       {/* Care log */}
