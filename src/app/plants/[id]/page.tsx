@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   Camera,
@@ -72,7 +73,8 @@ const LOG_ACTIONS: { type: CareEventType; icon: typeof Droplet }[] = [
 export default function PlantDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { ready, getPlant, waterPlant, logCare, removePlant } = useCellar();
+  const { ready, getPlant, waterPlant, logCare, removePlant, undoEvents } =
+    useCellar();
   const photoRef = useRef<HTMLInputElement>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -109,7 +111,25 @@ export default function PlantDetailPage() {
     if (!file || !plant) return;
     const photoUrl = await fileToDataUrl(file);
     logCare({ plantId: plant.id, type: "photo", date: todayISO(), photoUrl });
+    toast.success("Photo added to the timeline");
     e.target.value = "";
+  }
+
+  function onWaterNow() {
+    if (!plant) return;
+    const id = waterPlant(plant.id);
+    toast.success(`Watered ${plant.nickname}`, {
+      description: `Next drink in ${plant.waterEveryDays} days.`,
+      action: { label: "Undo", onClick: () => undoEvents([id]) },
+    });
+  }
+
+  function onLogCare(type: CareEventType) {
+    if (!plant) return;
+    const id = logCare({ plantId: plant.id, type, date: todayISO() });
+    toast.success(`${CARE_EVENT_LABELS[type]} logged`, {
+      action: { label: "Undo", onClick: () => undoEvents([id]) },
+    });
   }
 
   return (
@@ -150,7 +170,7 @@ export default function PlantDetailPage() {
           )}
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button onClick={() => waterPlant(plant.id)} className="gap-1.5">
+            <Button onClick={onWaterNow} className="gap-1.5">
               <Droplet className="size-4" /> Water now
             </Button>
             <input
@@ -217,9 +237,7 @@ export default function PlantDetailPage() {
           {LOG_ACTIONS.map(({ type, icon: Icon }) => (
             <button
               key={type}
-              onClick={() =>
-                logCare({ plantId: plant.id, type, date: todayISO() })
-              }
+              onClick={() => onLogCare(type)}
               className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-sm transition-colors hover:bg-accent"
             >
               <Icon className="size-4" /> {CARE_EVENT_LABELS[type]}

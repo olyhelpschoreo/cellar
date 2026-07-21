@@ -109,9 +109,33 @@ export function deletePlant(id: string): CellarSnapshot {
 
 export type NewCareEvent = Omit<CareEvent, "id">;
 
-export function addCareEvent(input: NewCareEvent): CellarSnapshot {
+export function addCareEvent(input: NewCareEvent): {
+  snapshot: CellarSnapshot;
+  event: CareEvent;
+} {
   const db = read();
-  db.events.push({ ...input, id: uid() });
+  const event: CareEvent = { ...input, id: uid() };
+  db.events.push(event);
+  write(db);
+  return { snapshot: db, event };
+}
+
+export function addCareEvents(inputs: NewCareEvent[]): {
+  snapshot: CellarSnapshot;
+  events: CareEvent[];
+} {
+  const db = read();
+  const events = inputs.map((input) => ({ ...input, id: uid() }));
+  db.events.push(...events);
+  write(db);
+  return { snapshot: db, events };
+}
+
+/** Remove events by id — powers "undo" after a watering. */
+export function removeCareEvents(ids: string[]): CellarSnapshot {
+  const db = read();
+  const drop = new Set(ids);
+  db.events = db.events.filter((e) => !drop.has(e.id));
   write(db);
   return db;
 }

@@ -16,9 +16,11 @@ import {
 import type { CareEvent, Plant, PlantWithHistory } from "./types";
 import {
   addCareEvent,
+  addCareEvents,
   createPlant,
   deletePlant,
   loadSnapshot,
+  removeCareEvents,
   updatePlant,
   type NewCareEvent,
   type NewPlantInput,
@@ -33,8 +35,12 @@ interface CellarContextValue {
   addPlant: (input: NewPlantInput) => void;
   editPlant: (id: string, patch: Partial<Plant>) => void;
   removePlant: (id: string) => void;
-  logCare: (input: NewCareEvent) => void;
-  waterPlant: (plantId: string) => void;
+  /** Returns the new event's id so callers can offer Undo. */
+  logCare: (input: NewCareEvent) => string;
+  waterPlant: (plantId: string) => string;
+  /** Water many plants at once; returns all new event ids for batch Undo. */
+  waterPlants: (plantIds: string[]) => string[];
+  undoEvents: (ids: string[]) => void;
 }
 
 const CellarContext = createContext<CellarContextValue | null>(null);
@@ -74,12 +80,34 @@ export function CellarProvider({ children }: { children: ReactNode }) {
     [sync],
   );
   const removePlant = useCallback((id: string) => sync(deletePlant(id)), [sync]);
-  const logCare = useCallback((input: NewCareEvent) => sync(addCareEvent(input)), [sync]);
-  const waterPlant = useCallback(
-    (plantId: string) =>
-      sync(addCareEvent({ plantId, type: "watered", date: todayISO() })),
+
+  const logCare = useCallback(
+    (input: NewCareEvent) => {
+      const { snapshot, event } = addCareEvent(input);
+      sync(snapshot);
+      return event.id;
+    },
     [sync],
   );
+
+  const waterPlant = useCallback(
+    (plantId: string) => logCare({ plantId, type: "watered", date: todayISO() }),
+    [logCare],
+  );
+
+  const waterPlants = useCallback(
+    (plantIds: string[]) => {
+      const today = todayISO();
+      const { snapshot, events } = addCareEvents(
+        plantIds.map((plantId) => ({ plantId, type: "watered" as const, date: today })),
+      );
+      sync(snapshot);
+      return events.map((e) => e.id);
+    },
+    [sync],
+  );
+
+  const undoEvents = useCallback((ids: string[]) => sync(removeCareEvents(ids)), [sync]);
 
   const value = useMemo<CellarContextValue>(
     () => ({
@@ -92,8 +120,22 @@ export function CellarProvider({ children }: { children: ReactNode }) {
       removePlant,
       logCare,
       waterPlant,
+      waterPlants,
+      undoEvents,
     }),
-    [ready, plants, events, getPlant, addPlant, editPlant, removePlant, logCare, waterPlant],
+    [
+      ready,
+      plants,
+      events,
+      getPlant,
+      addPlant,
+      editPlant,
+      removePlant,
+      logCare,
+      waterPlant,
+      waterPlants,
+      undoEvents,
+    ],
   );
 
   return <CellarContext.Provider value={value}>{children}</CellarContext.Provider>;

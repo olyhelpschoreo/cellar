@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Droplet } from "lucide-react";
+import { toast } from "sonner";
 import type { CareEvent, Plant } from "@/lib/types";
 import { careStatus, duePhrase } from "@/lib/care";
 import { STATUS_STYLES } from "@/lib/status-style";
@@ -11,9 +12,17 @@ import { useCellar } from "@/lib/cellar-provider";
 import { cn } from "@/lib/utils";
 
 export function PlantCard({ plant, events }: { plant: Plant; events: CareEvent[] }) {
-  const { waterPlant } = useCellar();
+  const { waterPlant, undoEvents } = useCellar();
   const status = careStatus(plant, events);
   const s = STATUS_STYLES[status.status];
+
+  function onWater() {
+    const id = waterPlant(plant.id);
+    toast.success(`Watered ${plant.nickname}`, {
+      description: `Next drink in ${plant.waterEveryDays} days.`,
+      action: { label: "Undo", onClick: () => undoEvents([id]) },
+    });
+  }
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition-shadow hover:shadow-md">
@@ -49,7 +58,7 @@ export function PlantCard({ plant, events }: { plant: Plant; events: CareEvent[]
           <span className="text-xs text-muted-foreground">{duePhrase(status)}</span>
           <button
             type="button"
-            onClick={() => waterPlant(plant.id)}
+            onClick={onWater}
             className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             <Droplet className="size-3.5" />

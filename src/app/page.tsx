@@ -2,15 +2,17 @@
 
 import { useMemo } from "react";
 import { Droplets, Leaf, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import { useCellar } from "@/lib/cellar-provider";
-import { careStatus } from "@/lib/care";
+import { careStatus, daysBetween, todayISO } from "@/lib/care";
 import { PlantCard } from "@/components/plant-card";
 import { AddPlantDialog } from "@/components/add-plant-dialog";
+import { CollectionHealth } from "@/components/collection-health";
 
 export default function CollectionPage() {
-  const { ready, plants, events } = useCellar();
+  const { ready, plants, events, waterPlants, undoEvents } = useCellar();
 
-  const { needsWater, order } = useMemo(() => {
+  const { needsWater, order, counts, wateredThisWeek } = useMemo(() => {
     const withStatus = plants.map((p) => ({
       plant: p,
       status: careStatus(
@@ -25,8 +27,27 @@ export default function CollectionPage() {
       return a.plant.nickname.localeCompare(b.plant.nickname);
     });
     const needsWater = order.filter((x) => x.status.status !== "happy");
-    return { needsWater, order };
+
+    const counts = { happy: 0, thirsty: 0, overdue: 0 };
+    for (const { status } of withStatus) counts[status.status]++;
+
+    const today = todayISO();
+    const wateredThisWeek = events.filter(
+      (e) => e.type === "watered" && daysBetween(today, e.date) <= 6 && daysBetween(today, e.date) >= 0,
+    ).length;
+
+    return { needsWater, order, counts, wateredThisWeek };
   }, [plants, events]);
+
+  function onWaterAll() {
+    const ids = needsWater.map((x) => x.plant.id);
+    if (ids.length === 0) return;
+    const eventIds = waterPlants(ids);
+    toast.success(`Watered ${ids.length} plant${ids.length === 1 ? "" : "s"}`, {
+      description: "Your whole collection is happy now.",
+      action: { label: "Undo", onClick: () => undoEvents(eventIds) },
+    });
+  }
 
   if (!ready) {
     return (
@@ -79,14 +100,29 @@ export default function CollectionPage() {
         </div>
       </div>
 
+      {/* Health at a glance */}
+      <div className="mt-5">
+        <CollectionHealth counts={counts} wateredThisWeek={wateredThisWeek} />
+      </div>
+
       {/* Needs water today */}
       {needsWater.length > 0 ? (
         <section className="mt-8">
-          <div className="mb-3 flex items-center gap-2">
-            <Droplets className="size-4 text-primary" />
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Needs a drink
-            </h2>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Droplets className="size-4 text-primary" />
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                Needs a drink
+              </h2>
+            </div>
+            {needsWater.length > 1 && (
+              <button
+                onClick={onWaterAll}
+                className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                <Droplets className="size-3.5" /> Water all ({needsWater.length})
+              </button>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {needsWater.map(({ plant }) => (
