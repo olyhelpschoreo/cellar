@@ -1,65 +1,139 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useMemo } from "react";
+import { Droplets, Leaf, Sparkles } from "lucide-react";
+import { useCellar } from "@/lib/cellar-provider";
+import { careStatus } from "@/lib/care";
+import { PlantCard } from "@/components/plant-card";
+import { AddPlantDialog } from "@/components/add-plant-dialog";
+
+export default function CollectionPage() {
+  const { ready, plants, events } = useCellar();
+
+  const { needsWater, order } = useMemo(() => {
+    const withStatus = plants.map((p) => ({
+      plant: p,
+      status: careStatus(
+        p,
+        events.filter((e) => e.plantId === p.id),
+      ),
+    }));
+    // Sort the whole collection by urgency (most overdue first), then name.
+    const order = [...withStatus].sort((a, b) => {
+      if (a.status.daysUntilDue !== b.status.daysUntilDue)
+        return a.status.daysUntilDue - b.status.daysUntilDue;
+      return a.plant.nickname.localeCompare(b.plant.nickname);
+    });
+    const needsWater = order.filter((x) => x.status.status !== "happy");
+    return { needsWater, order };
+  }, [plants, events]);
+
+  if (!ready) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+        <div className="h-8 w-48 animate-pulse rounded-lg bg-muted" />
+        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="aspect-[4/5] animate-pulse rounded-2xl bg-muted" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (plants.length === 0) {
+    return (
+      <div className="mx-auto flex max-w-md flex-col items-center px-6 py-24 text-center">
+        <span className="flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <Leaf className="size-8" strokeWidth={1.5} />
+        </span>
+        <h1 className="mt-6 text-2xl font-semibold">Your cellar is empty</h1>
+        <p className="mt-2 text-muted-foreground">
+          Add your first plant and Cellar will keep track of when it needs water and
+          how it grows over time.
+        </p>
+        <div className="mt-6">
+          <AddPlantDialog />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+      {/* Summary */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Your collection</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {plants.length} plant{plants.length === 1 ? "" : "s"}
+            {needsWater.length > 0 && (
+              <>
+                {" · "}
+                <span className="font-medium text-foreground">
+                  {needsWater.length} need{needsWater.length === 1 ? "s" : ""} attention
+                </span>
+              </>
+            )}
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </div>
+
+      {/* Needs water today */}
+      {needsWater.length > 0 ? (
+        <section className="mt-8">
+          <div className="mb-3 flex items-center gap-2">
+            <Droplets className="size-4 text-primary" />
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Needs a drink
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {needsWater.map(({ plant }) => (
+              <PlantCard
+                key={plant.id}
+                plant={plant}
+                events={events.filter((e) => e.plantId === plant.id)}
+              />
+            ))}
+          </div>
+        </section>
+      ) : (
+        <div className="mt-8 flex items-center gap-2 rounded-xl border border-happy-soft bg-happy-soft/50 px-4 py-3 text-sm text-happy-soft-foreground">
+          <Sparkles className="size-4" />
+          Everyone&apos;s happy — nothing needs water right now.
         </div>
-      </main>
+      )}
+
+      {/* Full collection */}
+      <section className="mt-10">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          All plants
+        </h2>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {order.map(({ plant }) => (
+            <PlantCard
+              key={plant.id}
+              plant={plant}
+              events={events.filter((e) => e.plantId === plant.id)}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Mobile add button */}
+      <div className="fixed bottom-5 right-5 z-30 sm:hidden">
+        <AddPlantDialog
+          trigger={
+            <button
+              className="flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"
+              aria-label="Add plant"
+            >
+              <Leaf className="size-6" />
+            </button>
+          }
+        />
+      </div>
     </div>
   );
 }

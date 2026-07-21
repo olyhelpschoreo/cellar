@@ -1,26 +1,182 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
+
+/*
+  Cellar — botanical design system
+  ---------------------------------
+  Palette leans warm + earthy: cream paper in light, deep soil/forest in dark,
+  a living leaf-green as primary. Plant health has three semantic states, each
+  with a `-soft` fill + `-soft-foreground` pair (Choreo convention) so a status
+  colour is never used as both a large fill and its own text.
+*/
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Plant-health semantic tokens */
+  --color-happy: var(--happy);
+  --color-happy-foreground: var(--happy-foreground);
+  --color-happy-soft: var(--happy-soft);
+  --color-happy-soft-foreground: var(--happy-soft-foreground);
+  --color-thirsty: var(--thirsty);
+  --color-thirsty-foreground: var(--thirsty-foreground);
+  --color-thirsty-soft: var(--thirsty-soft);
+  --color-thirsty-soft-foreground: var(--thirsty-soft-foreground);
+  --color-overdue: var(--overdue);
+  --color-overdue-foreground: var(--overdue-foreground);
+  --color-overdue-soft: var(--overdue-soft);
+  --color-overdue-soft-foreground: var(--overdue-soft-foreground);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --radius: 0.75rem;
+
+  /* Warm cream paper, deep-green ink */
+  --background: oklch(0.985 0.008 95);
+  --foreground: oklch(0.27 0.02 152);
+
+  --card: oklch(0.998 0.004 95);
+  --card-foreground: oklch(0.27 0.02 152);
+  --popover: oklch(0.998 0.004 95);
+  --popover-foreground: oklch(0.27 0.02 152);
+
+  /* Living leaf green */
+  --primary: oklch(0.53 0.115 151);
+  --primary-foreground: oklch(0.98 0.02 120);
+
+  --secondary: oklch(0.945 0.022 140);
+  --secondary-foreground: oklch(0.33 0.04 151);
+
+  --muted: oklch(0.955 0.014 110);
+  --muted-foreground: oklch(0.5 0.025 145);
+
+  --accent: oklch(0.93 0.04 148);
+  --accent-foreground: oklch(0.33 0.05 151);
+
+  --destructive: oklch(0.585 0.17 28);
+  --border: oklch(0.9 0.016 125);
+  --input: oklch(0.9 0.016 125);
+  --ring: oklch(0.53 0.115 151);
+
+  /* Health — happy (green) */
+  --happy: oklch(0.58 0.13 150);
+  --happy-foreground: oklch(0.98 0.02 120);
+  --happy-soft: oklch(0.93 0.05 150);
+  --happy-soft-foreground: oklch(0.4 0.09 151);
+
+  /* Health — thirsty / water soon (warm amber) */
+  --thirsty: oklch(0.76 0.135 78);
+  --thirsty-foreground: oklch(0.28 0.05 70);
+  --thirsty-soft: oklch(0.94 0.06 82);
+  --thirsty-soft-foreground: oklch(0.48 0.1 68);
+
+  /* Health — overdue (terracotta) */
+  --overdue: oklch(0.6 0.16 42);
+  --overdue-foreground: oklch(0.98 0.02 60);
+  --overdue-soft: oklch(0.93 0.055 45);
+  --overdue-soft-foreground: oklch(0.48 0.14 38);
+
+  --chart-1: oklch(0.58 0.13 150);
+  --chart-2: oklch(0.76 0.135 78);
+  --chart-3: oklch(0.6 0.16 42);
+  --chart-4: oklch(0.5 0.09 200);
+  --chart-5: oklch(0.45 0.11 300);
+}
+
+.dark {
+  /* Deep soil / forest floor */
+  --background: oklch(0.205 0.018 152);
+  --foreground: oklch(0.95 0.012 110);
+
+  --card: oklch(0.245 0.02 152);
+  --card-foreground: oklch(0.95 0.012 110);
+  --popover: oklch(0.245 0.02 152);
+  --popover-foreground: oklch(0.95 0.012 110);
+
+  --primary: oklch(0.7 0.13 150);
+  --primary-foreground: oklch(0.2 0.03 152);
+
+  --secondary: oklch(0.3 0.025 150);
+  --secondary-foreground: oklch(0.95 0.012 110);
+
+  --muted: oklch(0.29 0.02 150);
+  --muted-foreground: oklch(0.72 0.02 130);
+
+  --accent: oklch(0.33 0.035 150);
+  --accent-foreground: oklch(0.95 0.012 110);
+
+  --destructive: oklch(0.68 0.18 25);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.7 0.13 150);
+
+  --happy: oklch(0.72 0.14 150);
+  --happy-foreground: oklch(0.2 0.03 152);
+  --happy-soft: oklch(0.35 0.06 150);
+  --happy-soft-foreground: oklch(0.88 0.09 150);
+
+  --thirsty: oklch(0.8 0.14 80);
+  --thirsty-foreground: oklch(0.24 0.05 70);
+  --thirsty-soft: oklch(0.38 0.06 78);
+  --thirsty-soft-foreground: oklch(0.9 0.09 82);
+
+  --overdue: oklch(0.68 0.16 42);
+  --overdue-foreground: oklch(0.2 0.03 40);
+  --overdue-soft: oklch(0.38 0.08 42);
+  --overdue-soft-foreground: oklch(0.9 0.08 45);
+
+  --chart-1: oklch(0.72 0.14 150);
+  --chart-2: oklch(0.8 0.14 80);
+  --chart-3: oklch(0.68 0.16 42);
+  --chart-4: oklch(0.62 0.1 200);
+  --chart-5: oklch(0.6 0.12 300);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
 }
