@@ -18,7 +18,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { LIGHT_LABELS, type LightLevel } from "@/lib/types";
 import { todayISO } from "@/lib/care";
 import { useCellar } from "@/lib/cellar-provider";
+import type { PlantSpecies } from "@/lib/plant-library";
 import { PlantPhoto } from "./plant-photo";
+import { SpeciesCombobox } from "./species-combobox";
 import { cn } from "@/lib/utils";
 
 const LIGHTS: LightLevel[] = ["low", "medium", "bright"];
@@ -58,6 +60,13 @@ export function AddPlantDialog({ trigger }: { trigger?: ReactNode }) {
     setWaterEveryDays(7);
     setAcquiredDate(todayISO());
     setNotes("");
+  }
+
+  function applySpecies(s: PlantSpecies) {
+    setSpecies(s.common);
+    setScientificName(s.scientific);
+    setWaterEveryDays(s.waterEveryDays);
+    setLight(s.light);
   }
 
   async function onPickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
@@ -175,11 +184,12 @@ export function AddPlantDialog({ trigger }: { trigger?: ReactNode }) {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="species">Species</Label>
-              <Input
+              <SpeciesCombobox
                 id="species"
                 value={species}
-                onChange={(e) => setSpecies(e.target.value)}
-                placeholder="Boston Fern"
+                onValueChange={setSpecies}
+                onSelect={applySpecies}
+                placeholder="Start typing…"
               />
             </div>
           </div>
