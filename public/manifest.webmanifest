@@ -1,0 +1,16 @@
+{
+  "name": "Cellar — your living plant collection",
+  "short_name": "Cellar",
+  "description": "A beautiful catalog of your plants that knows who needs water today and remembers how each one has grown.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f4ea",
+  "theme_color": "#3f7c4a",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

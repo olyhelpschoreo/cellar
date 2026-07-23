@@ -1,8 +1,8 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -71,14 +71,15 @@ const CARE_ICONS: Record<CareEventType, LucideIcon> = {
 
 const LOG_ACTIONS: CareEventType[] = ["watered", "fertilized", "pruned", "repotted"];
 
-export default function PlantDetailPage() {
-  const params = useParams<{ id: string }>();
+function PlantDetailInner() {
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id") ?? "";
   const router = useRouter();
   const { ready, getPlant, waterPlant, logCare, removePlant, undoEvents } =
     useCellar();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const plant = getPlant(params.id);
+  const plant = getPlant(id);
 
   if (ready && !plant) {
     return (
@@ -322,5 +323,19 @@ function Fact({
       </div>
       <p className="mt-1 truncate text-sm font-medium">{value}</p>
     </div>
+  );
+}
+
+export default function PlantDetailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+          <div className="h-64 animate-pulse rounded-2xl bg-muted" />
+        </div>
+      }
+    >
+      <PlantDetailInner />
+    </Suspense>
   );
 }

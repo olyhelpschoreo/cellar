@@ -26,7 +26,7 @@ export function PlantCard({ plant, events }: { plant: Plant; events: CareEvent[]
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition-shadow hover:shadow-md">
-      <Link href={`/plants/${plant.id}`} className="block">
+      <Link href={`/plant?id=${plant.id}`} className="block">
         <div
           className={cn(
             "relative aspect-[4/3] w-full overflow-hidden ring-4 ring-inset",
@@ -47,7 +47,7 @@ export function PlantCard({ plant, events }: { plant: Plant; events: CareEvent[]
       </Link>
 
       <div className="flex flex-1 flex-col gap-1 p-4">
-        <Link href={`/plants/${plant.id}`} className="min-w-0">
+        <Link href={`/plant?id=${plant.id}`} className="min-w-0">
           <h3 className="truncate text-base font-semibold leading-tight">
             {plant.nickname}
           </h3>
