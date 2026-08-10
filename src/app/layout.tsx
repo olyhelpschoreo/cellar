@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { CellarProvider } from "@/lib/cellar-provider";
 import { SiteHeader } from "@/components/site-header";
 import { PwaRegister } from "@/components/pwa-register";
+import { ReminderRunner } from "@/components/reminder-runner";
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
@@ -60,6 +61,7 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
             <Toaster />
             <PwaRegister />
+            <ReminderRunner />
           </CellarProvider>
         </ThemeProvider>
       </body>

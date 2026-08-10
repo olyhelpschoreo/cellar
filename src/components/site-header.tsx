@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Sprout } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
+import { ReminderToggle } from "./reminder-toggle";
 import { AddPlantDialog } from "./add-plant-dialog";
 
 export function SiteHeader() {
@@ -14,6 +15,7 @@ export function SiteHeader() {
           <span className="text-lg font-semibold tracking-tight">Cellar</span>
         </Link>
         <div className="flex items-center gap-1.5">
+          <ReminderToggle />
           <ThemeToggle />
           <div className="hidden sm:block">
             <AddPlantDialog />

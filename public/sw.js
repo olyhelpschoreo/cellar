@@ -1,9 +1,27 @@
 // Cellar service worker — offline support for the installed PWA.
 // Navigations are network-first (fresh when online, cached shell when offline);
 // other same-origin GETs are stale-while-revalidate.
-const CACHE = "cellar-v2";
+const CACHE = "cellar-v3";
 
 self.addEventListener("install", () => self.skipWaiting());
+
+// Focus (or open) the app when a watering reminder is tapped.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || "./";
+  event.waitUntil(
+    (async () => {
+      const wins = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+      for (const client of wins) {
+        if ("focus" in client) return client.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
+    })(),
+  );
+});
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
