@@ -1,16 +1,22 @@
 "use client";
 
-import { useMemo } from "react";
-import { Droplets, Leaf, Sparkles } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Droplets, Leaf, SearchX, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useCellar } from "@/lib/cellar-provider";
 import { careStatus, daysBetween, todayISO } from "@/lib/care";
 import { PlantCard } from "@/components/plant-card";
 import { AddPlantDialog } from "@/components/add-plant-dialog";
 import { CollectionHealth } from "@/components/collection-health";
+import {
+  CollectionToolbar,
+  type StatusFilter,
+} from "@/components/collection-toolbar";
 
 export default function CollectionPage() {
   const { ready, plants, events, waterPlants, undoEvents } = useCellar();
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   const { needsWater, order, counts, wateredThisWeek } = useMemo(() => {
     const withStatus = plants.map((p) => ({
@@ -48,6 +54,21 @@ export default function CollectionPage() {
       action: { label: "Undo", onClick: () => undoEvents(eventIds) },
     });
   }
+
+  // Search matches name / species / scientific name / room; filter by status.
+  const q = query.trim().toLowerCase();
+  const filtering = q !== "" || statusFilter !== "all";
+  const results = order.filter(({ plant, status }) => {
+    if (statusFilter !== "all" && status.status !== statusFilter) return false;
+    if (q) {
+      const hay = [plant.nickname, plant.species, plant.scientificName, plant.location]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
 
   if (!ready) {
     return (
@@ -105,6 +126,41 @@ export default function CollectionPage() {
         <CollectionHealth counts={counts} wateredThisWeek={wateredThisWeek} />
       </div>
 
+      {/* Search + filter */}
+      <div className="mt-6">
+        <CollectionToolbar
+          query={query}
+          onQuery={setQuery}
+          status={statusFilter}
+          onStatus={setStatusFilter}
+        />
+      </div>
+
+      {filtering ? (
+        /* Filtered / searched results */
+        <section className="mt-6">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            {results.length} result{results.length === 1 ? "" : "s"}
+          </h2>
+          {results.length > 0 ? (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {results.map(({ plant }) => (
+                <PlantCard
+                  key={plant.id}
+                  plant={plant}
+                  events={events.filter((e) => e.plantId === plant.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed py-14 text-sm text-muted-foreground">
+              <SearchX className="size-6" />
+              No plants match. Try a different search or filter.
+            </div>
+          )}
+        </section>
+      ) : (
+        <>
       {/* Needs water today */}
       {needsWater.length > 0 ? (
         <section className="mt-8">
@@ -156,6 +212,8 @@ export default function CollectionPage() {
           ))}
         </div>
       </section>
+        </>
+      )}
 
       {/* Mobile add button */}
       <div className="fixed bottom-5 right-5 z-30 sm:hidden">
