@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
-import { Camera, Loader2, Plus, X } from "lucide-react";
+import { Camera, Loader2, Pencil, Plus, X } from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -15,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LIGHT_LABELS, type LightLevel } from "@/lib/types";
+import { LIGHT_LABELS, type LightLevel, type Plant } from "@/lib/types";
 import { todayISO } from "@/lib/care";
 import { useCellar } from "@/lib/cellar-provider";
 import type { PlantSpecies } from "@/lib/plant-library";
@@ -34,32 +35,45 @@ async function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-export function AddPlantDialog({ trigger }: { trigger?: ReactNode }) {
-  const { addPlant } = useCellar();
+/**
+ * The plant form dialog. Without `plant` it creates a new plant; with `plant`
+ * it edits that one (fields prefilled, saved via editPlant).
+ */
+export function AddPlantDialog({
+  trigger,
+  plant,
+}: {
+  trigger?: ReactNode;
+  plant?: Plant;
+}) {
+  const editing = Boolean(plant);
+  const { addPlant, editPlant } = useCellar();
   const [open, setOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [photoUrl, setPhotoUrl] = useState<string | undefined>();
+  const [photoUrl, setPhotoUrl] = useState<string | undefined>(plant?.photoUrl);
   const [reading, setReading] = useState(false);
-  const [nickname, setNickname] = useState("");
-  const [species, setSpecies] = useState("");
-  const [scientificName, setScientificName] = useState("");
-  const [location, setLocation] = useState("");
-  const [light, setLight] = useState<LightLevel>("medium");
-  const [waterEveryDays, setWaterEveryDays] = useState(7);
-  const [acquiredDate, setAcquiredDate] = useState(todayISO());
-  const [notes, setNotes] = useState("");
+  const [nickname, setNickname] = useState(plant?.nickname ?? "");
+  const [species, setSpecies] = useState(plant?.species ?? "");
+  const [scientificName, setScientificName] = useState(plant?.scientificName ?? "");
+  const [location, setLocation] = useState(plant?.location ?? "");
+  const [light, setLight] = useState<LightLevel>(plant?.light ?? "medium");
+  const [waterEveryDays, setWaterEveryDays] = useState(plant?.waterEveryDays ?? 7);
+  const [acquiredDate, setAcquiredDate] = useState(plant?.acquiredDate ?? todayISO());
+  const [notes, setNotes] = useState(plant?.notes ?? "");
 
+  // On close, discard unsaved changes: reset to the plant's values (edit) or
+  // to an empty form (add).
   function reset() {
-    setPhotoUrl(undefined);
-    setNickname("");
-    setSpecies("");
-    setScientificName("");
-    setLocation("");
-    setLight("medium");
-    setWaterEveryDays(7);
-    setAcquiredDate(todayISO());
-    setNotes("");
+    setPhotoUrl(plant?.photoUrl);
+    setNickname(plant?.nickname ?? "");
+    setSpecies(plant?.species ?? "");
+    setScientificName(plant?.scientificName ?? "");
+    setLocation(plant?.location ?? "");
+    setLight(plant?.light ?? "medium");
+    setWaterEveryDays(plant?.waterEveryDays ?? 7);
+    setAcquiredDate(plant?.acquiredDate ?? todayISO());
+    setNotes(plant?.notes ?? "");
   }
 
   function applySpecies(s: PlantSpecies) {
@@ -83,7 +97,7 @@ export function AddPlantDialog({ trigger }: { trigger?: ReactNode }) {
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!nickname.trim()) return;
-    addPlant({
+    const fields = {
       nickname: nickname.trim(),
       species: species.trim(),
       scientificName: scientificName.trim() || undefined,
@@ -93,9 +107,14 @@ export function AddPlantDialog({ trigger }: { trigger?: ReactNode }) {
       waterEveryDays: Math.max(1, waterEveryDays || 1),
       acquiredDate,
       notes: notes.trim() || undefined,
-      wateredToday: true,
-    });
-    reset();
+    };
+    if (editing && plant) {
+      editPlant(plant.id, fields);
+      toast.success(`Saved changes to ${fields.nickname}`);
+    } else {
+      // A brand-new plant starts "watered today" so its schedule begins now.
+      addPlant({ ...fields, wateredToday: true });
+    }
     setOpen(false);
   }
 
@@ -108,17 +127,24 @@ export function AddPlantDialog({ trigger }: { trigger?: ReactNode }) {
       }}
     >
       <DialogTrigger asChild>
-        {trigger ?? (
-          <Button className="gap-1.5">
-            <Plus className="size-4" /> Add plant
-          </Button>
-        )}
+        {trigger ??
+          (editing ? (
+            <Button variant="outline" className="gap-1.5">
+              <Pencil className="size-4" /> Edit
+            </Button>
+          ) : (
+            <Button className="gap-1.5">
+              <Plus className="size-4" /> Add plant
+            </Button>
+          ))}
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] gap-0 overflow-y-auto p-0 sm:max-w-lg">
         <DialogHeader className="border-b p-5">
-          <DialogTitle>Add a plant</DialogTitle>
+          <DialogTitle>{editing ? "Edit plant" : "Add a plant"}</DialogTitle>
           <DialogDescription>
-            A photo and a nickname is all you need — fill in the rest whenever.
+            {editing
+              ? "Update the details — changes save to your collection."
+              : "A photo and a nickname is all you need — fill in the rest whenever."}
           </DialogDescription>
         </DialogHeader>
 
@@ -275,7 +301,7 @@ export function AddPlantDialog({ trigger }: { trigger?: ReactNode }) {
               Cancel
             </Button>
             <Button type="submit" disabled={!nickname.trim()}>
-              Add to collection
+              {editing ? "Save changes" : "Add to collection"}
             </Button>
           </DialogFooter>
         </form>

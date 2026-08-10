@@ -35,6 +35,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { PlantPhoto } from "@/components/plant-photo";
 import { PhotoTimeline } from "@/components/photo-timeline";
 import { AddPhotoDialog } from "@/components/add-photo-dialog";
+import { AddPlantDialog } from "@/components/add-plant-dialog";
 import { CareGuide } from "@/components/care-guide";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -165,6 +166,7 @@ function PlantDetailInner() {
               <Droplet className="size-4" /> Water now
             </Button>
             <AddPhotoDialog plantId={plant.id} />
+            <AddPlantDialog plant={plant} />
           </div>
 
           {/* Schedule */}
