@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Sprout } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { ReminderToggle } from "./reminder-toggle";
+import { DataMenu } from "./data-menu";
 import { AddPlantDialog } from "./add-plant-dialog";
 
 export function SiteHeader() {
@@ -16,6 +17,7 @@ export function SiteHeader() {
         </Link>
         <div className="flex items-center gap-1.5">
           <ReminderToggle />
+          <DataMenu />
           <ThemeToggle />
           <div className="hidden sm:block">
             <AddPlantDialog />

@@ -55,6 +55,13 @@ export function loadSnapshot(): CellarSnapshot {
   return read();
 }
 
+/** Overwrite the whole collection — used when restoring a backup. */
+export function replaceSnapshot(snap: CellarSnapshot): CellarSnapshot {
+  const db: DB = { plants: snap.plants ?? [], events: snap.events ?? [] };
+  write(db);
+  return db;
+}
+
 export type NewPlantInput = Omit<Plant, "id" | "createdAt"> & {
   /** Optional initial "watered" bootstrap so a brand-new plant starts happy. */
   wateredToday?: boolean;

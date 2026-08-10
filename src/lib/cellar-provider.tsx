@@ -21,7 +21,9 @@ import {
   deletePlant,
   loadSnapshot,
   removeCareEvents,
+  replaceSnapshot,
   updatePlant,
+  type CellarSnapshot,
   type NewCareEvent,
   type NewPlantInput,
 } from "./store";
@@ -41,6 +43,8 @@ interface CellarContextValue {
   /** Water many plants at once; returns all new event ids for batch Undo. */
   waterPlants: (plantIds: string[]) => string[];
   undoEvents: (ids: string[]) => void;
+  /** Replace the entire collection (used when restoring a backup). */
+  replaceAll: (snap: CellarSnapshot) => void;
 }
 
 const CellarContext = createContext<CellarContextValue | null>(null);
@@ -112,6 +116,11 @@ export function CellarProvider({ children }: { children: ReactNode }) {
 
   const undoEvents = useCallback((ids: string[]) => sync(removeCareEvents(ids)), [sync]);
 
+  const replaceAll = useCallback(
+    (snap: CellarSnapshot) => sync(replaceSnapshot(snap)),
+    [sync],
+  );
+
   const value = useMemo<CellarContextValue>(
     () => ({
       ready,
@@ -125,6 +134,7 @@ export function CellarProvider({ children }: { children: ReactNode }) {
       waterPlant,
       waterPlants,
       undoEvents,
+      replaceAll,
     }),
     [
       ready,
@@ -138,6 +148,7 @@ export function CellarProvider({ children }: { children: ReactNode }) {
       waterPlant,
       waterPlants,
       undoEvents,
+      replaceAll,
     ],
   );
 
