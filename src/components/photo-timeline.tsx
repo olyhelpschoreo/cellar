@@ -175,11 +175,12 @@ export function PhotoTimeline({ plant }: { plant: PlantWithHistory }) {
                   {active.note && (
                     <p className="text-sm text-muted-foreground">{active.note}</p>
                   )}
-                  {plant.acquiredDate && (
-                    <p className="text-xs text-muted-foreground">
-                      {spanPhrase(plant.acquiredDate, active.date)} into your care
-                    </p>
-                  )}
+                  {plant.acquiredDate &&
+                    daysBetween(active.date, plant.acquiredDate) >= 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        {spanPhrase(plant.acquiredDate, active.date)} into your care
+                      </p>
+                    )}
                 </div>
                 <span className="shrink-0 text-xs text-muted-foreground">
                   {openIndex! + 1} / {photos.length}

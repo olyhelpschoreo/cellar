@@ -5,6 +5,7 @@ import { Droplets, Leaf, SearchX, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useCellar } from "@/lib/cellar-provider";
 import { careStatus, daysBetween, todayISO } from "@/lib/care";
+import type { CareEvent } from "@/lib/types";
 import { PlantCard } from "@/components/plant-card";
 import { AddPlantDialog } from "@/components/add-plant-dialog";
 import { CollectionHealth } from "@/components/collection-health";
@@ -44,6 +45,17 @@ export default function CollectionPage() {
 
     return { needsWater, order, counts, wateredThisWeek };
   }, [plants, events]);
+
+  // Group events once so cards don't each re-scan the full events list.
+  const eventsByPlant = useMemo(() => {
+    const map = new Map<string, CareEvent[]>();
+    for (const e of events) {
+      const list = map.get(e.plantId);
+      if (list) list.push(e);
+      else map.set(e.plantId, [e]);
+    }
+    return map;
+  }, [events]);
 
   function onWaterAll() {
     const ids = needsWater.map((x) => x.plant.id);
@@ -148,7 +160,7 @@ export default function CollectionPage() {
                 <PlantCard
                   key={plant.id}
                   plant={plant}
-                  events={events.filter((e) => e.plantId === plant.id)}
+                  events={eventsByPlant.get(plant.id) ?? []}
                 />
               ))}
             </div>
@@ -185,7 +197,7 @@ export default function CollectionPage() {
               <PlantCard
                 key={plant.id}
                 plant={plant}
-                events={events.filter((e) => e.plantId === plant.id)}
+                events={eventsByPlant.get(plant.id) ?? []}
               />
             ))}
           </div>
@@ -207,7 +219,7 @@ export default function CollectionPage() {
             <PlantCard
               key={plant.id}
               plant={plant}
-              events={events.filter((e) => e.plantId === plant.id)}
+              events={eventsByPlant.get(plant.id) ?? []}
             />
           ))}
         </div>

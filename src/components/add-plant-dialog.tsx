@@ -20,20 +20,12 @@ import { LIGHT_LABELS, type LightLevel, type Plant } from "@/lib/types";
 import { todayISO } from "@/lib/care";
 import { useCellar } from "@/lib/cellar-provider";
 import type { PlantSpecies } from "@/lib/plant-library";
+import { fileToDataUrl } from "@/lib/image";
 import { PlantPhoto } from "./plant-photo";
 import { SpeciesCombobox } from "./species-combobox";
 import { cn } from "@/lib/utils";
 
 const LIGHTS: LightLevel[] = ["low", "medium", "bright"];
-
-async function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
 
 /**
  * The plant form dialog. Without `plant` it creates a new plant; with `plant`
@@ -114,6 +106,7 @@ export function AddPlantDialog({
     } else {
       // A brand-new plant starts "watered today" so its schedule begins now.
       addPlant({ ...fields, wateredToday: true });
+      reset(); // clear the form so the next "Add plant" starts blank
     }
     setOpen(false);
   }

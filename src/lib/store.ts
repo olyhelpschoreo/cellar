@@ -12,11 +12,17 @@ interface DB {
   events: CareEvent[];
 }
 
+let idCounter = 0;
+
 function uid(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
   }
-  return `id_${Math.floor(performance.now() * 1000)}_${performance.now()}`;
+  // Fallback for the rare non-secure context: a monotonic counter guarantees
+  // uniqueness even when many ids are minted in one synchronous batch
+  // (performance.now() alone can be coarsened to the same value).
+  idCounter += 1;
+  return `id_${Date.now().toString(36)}_${idCounter}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function emptyDB(): DB {
